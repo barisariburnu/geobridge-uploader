@@ -4,7 +4,17 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   File, 
   FileImage, 
   FileArchive, 
@@ -55,6 +65,7 @@ export function FileList() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [filePendingDelete, setFilePendingDelete] = useState<string | null>(null);
 
   const fetchFiles = async (showLoading = true) => {
     if (showLoading) {
@@ -84,10 +95,6 @@ export function FileList() {
   }, []);
 
   const deleteFile = async (fileName: string) => {
-    if (!confirm(`"${fileName}" dosyasını silmek istediğinizden emin misiniz?`)) {
-      return;
-    }
-
     setDeleting(fileName);
 
     try {
@@ -108,6 +115,7 @@ export function FileList() {
       alert(err instanceof Error ? err.message : 'Silme hatası');
     } finally {
       setDeleting(null);
+      setFilePendingDelete(null);
     }
   };
 
@@ -123,7 +131,46 @@ export function FileList() {
   }
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
+    <>
+      <AlertDialog
+        open={Boolean(filePendingDelete)}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setFilePendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="bg-slate-900 border-slate-700 text-slate-100">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dosya silme onayı</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              {filePendingDelete
+                ? `"${filePendingDelete}" dosyasını kalıcı olarak silmek üzeresiniz. Bu işlem geri alınamaz.`
+                : 'Bu işlem geri alınamaz.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(deleting)} className="border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700">
+              Vazgeç
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!filePendingDelete || Boolean(deleting)}
+              onClick={(event) => {
+                event.preventDefault();
+                if (filePendingDelete) {
+                  void deleteFile(filePendingDelete);
+                }
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Silmeyi Onayla
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-emerald-400" />
@@ -132,7 +179,9 @@ export function FileList() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={fetchFiles}
+          onClick={() => {
+            void fetchFiles();
+          }}
           className="text-slate-400 hover:text-white hover:bg-slate-700"
         >
           <RefreshCw className="h-4 w-4" />
@@ -173,7 +222,7 @@ export function FileList() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => deleteFile(file.name)}
+                  onClick={() => setFilePendingDelete(file.name)}
                   disabled={deleting === file.name}
                   className="text-slate-400 hover:text-red-400 hover:bg-red-500/20"
                 >
@@ -189,5 +238,6 @@ export function FileList() {
         )}
       </CardContent>
     </Card>
-  );
+  </>
+);
 }
