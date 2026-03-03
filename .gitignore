@@ -31,3 +31,6 @@ Thumbs.db
 # Build artifacts
 dist/
 coverage/
+
+# Docker
+.dockerignore

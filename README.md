@@ -102,6 +102,30 @@ npm run build
 npm run start
 ```
 
+## Docker (Port 2326)
+
+Run with Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+The application will be available at:
+
+- `http://localhost:2326`
+
+Stop container:
+
+```bash
+docker compose down
+```
+
+Notes:
+
+- Port mapping is defined in [`docker-compose.yml`](docker-compose.yml): `2326:3000`.
+- Production image is defined in [`Dockerfile`](Dockerfile) and uses Bun-based build steps.
+- Runtime environment variables are loaded from [`.env`](.env).
+
 ## API Endpoints
 
 - Login: [`POST /api/auth/login`](src/app/api/auth/login/route.ts)

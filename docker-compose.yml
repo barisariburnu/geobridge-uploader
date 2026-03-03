@@ -1,0 +1,11 @@
+services:
+  geobridge-uploader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geobridge-uploader
+    env_file:
+      - .env
+    ports:
+      - "2326:3000"
+    restart: unless-stopped
