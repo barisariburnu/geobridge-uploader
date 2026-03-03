@@ -64,7 +64,6 @@ export function FileList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [initialLoad, setInitialLoad] = useState(true);
   const [filePendingDelete, setFilePendingDelete] = useState<string | null>(null);
 
   const fetchFiles = async (showLoading = true) => {
@@ -83,10 +82,9 @@ export function FileList() {
         setError(data.message);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Dosyalar yüklenemedi');
+      setError(err instanceof Error ? err.message : 'Failed to load files');
     } finally {
       setLoading(false);
-      setInitialLoad(false);
     }
   };
 
@@ -112,7 +110,7 @@ export function FileList() {
         alert(data.message);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Silme hatası');
+      alert(err instanceof Error ? err.message : 'Delete failed');
     } finally {
       setDeleting(null);
       setFilePendingDelete(null);
@@ -124,7 +122,7 @@ export function FileList() {
       <Card className="bg-slate-800/50 border-slate-700">
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-400 mx-auto mb-4" />
-          <p className="text-slate-400">Dosyalar yükleniyor...</p>
+          <p className="text-slate-400">Loading files...</p>
         </CardContent>
       </Card>
     );
@@ -142,16 +140,16 @@ export function FileList() {
       >
         <AlertDialogContent className="bg-slate-900 border-slate-700 text-slate-100">
           <AlertDialogHeader>
-            <AlertDialogTitle>Dosya silme onayı</AlertDialogTitle>
+            <AlertDialogTitle>Confirm file deletion</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
               {filePendingDelete
-                ? `"${filePendingDelete}" dosyasını kalıcı olarak silmek üzeresiniz. Bu işlem geri alınamaz.`
-                : 'Bu işlem geri alınamaz.'}
+                ? `You are about to permanently delete "${filePendingDelete}". This action cannot be undone.`
+                : 'This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={Boolean(deleting)} className="border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700">
-              Vazgeç
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={!filePendingDelete || Boolean(deleting)}
@@ -164,7 +162,7 @@ export function FileList() {
               className="bg-red-600 text-white hover:bg-red-700"
             >
               {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Silmeyi Onayla
+              Confirm Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -174,7 +172,7 @@ export function FileList() {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-emerald-400" />
-          Yüklenen Dosyalar ({files.length})
+          Uploaded Files ({files.length})
         </CardTitle>
         <Button
           variant="ghost"
@@ -198,9 +196,9 @@ export function FileList() {
         {files.length === 0 ? (
           <div className="text-center py-8">
             <FolderOpen className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">Henüz dosya yüklenmedi</p>
+            <p className="text-slate-400">No files uploaded yet</p>
             <p className="text-sm text-slate-600 mt-1">
-              GeoTIFF veya Shapefile yükleyerek başlayın
+              Upload a GeoTIFF or Shapefile to get started
             </p>
           </div>
         ) : (

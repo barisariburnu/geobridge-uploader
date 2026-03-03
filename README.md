@@ -1,72 +1,84 @@
-# GeoServer File Uploader
+# GeoBridge Uploader
 
-GeoServer Docker sunucusundaki hedef klasöre web arayüzü üzerinden dosya yüklemek için geliştirilmiş Next.js uygulaması.
+GeoBridge Uploader is an open-source Next.js application for securely uploading geospatial files to a remote GeoServer data directory over SSH/SFTP.
 
-## Özellikler
+## Highlights
 
-- Web tabanlı giriş (kullanıcı adı/şifre)
-- Session tabanlı yetkilendirme ([`iron-session`](package.json:60))
-- Sürükle-bırak ile çoklu dosya yükleme
-- Sunucu tarafında dosya uzantısı ve boyut doğrulama
-- SSH/SFTP ile hedef dizine **doğrudan** yükleme
-- Yüklenen dosyaları listeleme ve silme
-- `.env` üzerinden tüm bağlantı/yetki ayarları
+- Secure web login with server-side session management
+- Upload geospatial files directly from browser to remote Linux server
+- Optional sudo fallback for restricted target directories
+- File listing and file deletion from the web UI
+- Confirmation dialog before file deletion
+- Environment-based configuration (`.env`)
 
-## Mimari (Güncel)
+## Tech Stack
 
-1. Kullanıcı web arayüzüne giriş yapar.
-2. Dosya [`/api/upload`](src/app/api/upload/route.ts) endpoint’ine gönderilir.
-3. Sunucu, SSH ile bağlanır. Önce dosyayı doğrudan `TARGET_PATH` altına SFTP ile yazmayı dener.
-4. İzin hatası olursa dosya `TEMP_UPLOAD_PATH` altına yüklenir ve `sudo` ile hedef dizine taşınır.
-5. Listeleme/silme işlemleri [`/api/files`](src/app/api/files/route.ts) ile yönetilir.
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS + Radix UI components
+- `ssh2` for SSH/SFTP operations
+- `iron-session` for authentication sessions
 
-## Gereksinimler
+## How It Works
+
+1. User signs in from the web interface.
+2. File is sent to [`POST /api/upload`](src/app/api/upload/route.ts).
+3. Server connects to remote host using SSH credentials from [`.env`](.env).
+4. Upload flow in [`uploadFileViaSSH()`](src/lib/ssh.ts:210):
+   - First tries direct write into `TARGET_PATH`.
+   - If permission fails and sudo is enabled, uploads to `TEMP_UPLOAD_PATH` then moves with sudo.
+5. File listing/deletion is handled via [`/api/files`](src/app/api/files/route.ts).
+
+## Requirements
 
 - Node.js 18+
-- Bun veya npm
-- Hedef Linux sunucuda SSH erişimi
-- SSH erişimi olan kullanıcı (gerekirse sudo yetkisi)
+- Bun or npm
+- SSH access to target Linux server
+- Write access to `TARGET_PATH`, or sudo permissions for fallback flow
 
-## Kurulum
+## Installation
 
 ```bash
 bun install
 ```
 
-veya
+or
 
 ```bash
 npm install
 ```
 
-## Ortam Değişkenleri
+## Environment Variables
 
-Proje kökünde [`.env`](.env) dosyası kullanılır.
-
-Örnek dosya: [`.env.example`](.env.example)
+Copy [`.env.example`](.env.example) to [`.env`](.env) and update values.
 
 ```env
-# SSH
-SSH_HOST=10.5.5.25
+# SSH Connection
+SSH_HOST=your-server-ip
 SSH_PORT=22
-SSH_USERNAME=bariburnu
-SSH_PASSWORD=...
+SSH_USERNAME=your-ssh-username
+SSH_PASSWORD=your-ssh-password
 SSH_PRIVATE_KEY=
 
-# Remote target
+# Remote target path
 TARGET_PATH=~/workspace/geoserver-docker/geoserver_data/uploads
 
-# Web auth
+# Web authentication
 AUTH_USERNAME=admin
-AUTH_PASSWORD=...
+AUTH_PASSWORD=your-secure-password
 
-# Session secret (32+)
-SESSION_SECRET=...
+# Session secret (min 32 chars)
+SESSION_SECRET=your-super-secret-key-for-session-encryption-min-32-chars
+
+# Optional sudo fallback
+SUDO_ENABLED=true
+SUDO_PASSWORD=
+TEMP_UPLOAD_PATH=/tmp
 ```
 
-## Geliştirme Komutları
+## Scripts
 
-[`package.json`](package.json)
+From [`package.json`](package.json):
 
 ```bash
 bun run dev
@@ -75,7 +87,7 @@ bun run build
 bun run start
 ```
 
-Eşdeğer npm komutları:
+npm equivalents:
 
 ```bash
 npm run dev
@@ -84,75 +96,25 @@ npm run build
 npm run start
 ```
 
-## SSH Kimlik Doğrulama ve İzin Notu
+## API Endpoints
 
-[`src/lib/ssh.ts`](src/lib/ssh.ts) içinde bağlantı katmanı aşağıdakileri destekler:
+- Login: [`POST /api/auth/login`](src/app/api/auth/login/route.ts)
+- Logout: [`POST /api/auth/logout`](src/app/api/auth/logout/route.ts)
+- Session: [`GET /api/auth/session`](src/app/api/auth/session/route.ts)
+- Upload: [`POST /api/upload`](src/app/api/upload/route.ts)
+- Files list: [`GET /api/files`](src/app/api/files/route.ts)
+- File delete: [`DELETE /api/files`](src/app/api/files/route.ts)
 
-- Password auth
-- Private key auth
-- Keyboard-interactive auth fallback
-- `SSH_PRIVATE_KEY` için hem inline key hem dosya yolu desteği
-- Hedef klasörde izin yoksa sudo fallback akışı
+## Security Notes
 
-Yeni opsiyonel değişkenler:
+- Use strong values for `AUTH_PASSWORD` and `SESSION_SECRET`.
+- Prefer SSH key authentication (`SSH_PRIVATE_KEY`) in production.
+- Restrict SSH user permissions to minimum required scope.
+- Keep `TARGET_PATH` limited to intended upload directory.
 
-- `SUDO_ENABLED=true|false`
-- `SUDO_PASSWORD=...` (boş bırakılırsa `SSH_PASSWORD` kullanılır)
-- `TEMP_UPLOAD_PATH=/tmp`
+## Open Source
 
-Upload/list/delete işlemlerinde önce normal izinlerle işlem denenir; `permission denied` durumunda `SUDO_ENABLED=true` ise sudo komutuna fallback yapılır.
+This project is licensed under the terms of the [MIT License](LICENSE).
 
-## API Endpointleri
-
-- Giriş: [`POST /api/auth/login`](src/app/api/auth/login/route.ts)
-- Çıkış: [`POST /api/auth/logout`](src/app/api/auth/logout/route.ts)
-- Session kontrolü: [`GET /api/auth/session`](src/app/api/auth/session/route.ts)
-- Dosya yükleme: [`POST /api/upload`](src/app/api/upload/route.ts)
-- Dosya listeleme: [`GET /api/files`](src/app/api/files/route.ts)
-- Dosya silme: [`DELETE /api/files`](src/app/api/files/route.ts)
-
-## Güvenlik Notları
-
-- Üretimde güçlü bir `AUTH_PASSWORD` kullanın.
-- `SESSION_SECRET` en az 32 karakter olmalı.
-- Mümkünse SSH key auth kullanın (`SSH_PRIVATE_KEY`).
-- `TARGET_PATH` yalnızca gerekli klasörü işaret etmelidir.
-
-## Sorun Giderme
-
-### `All configured authentication methods failed`
-
-- [`.env`](.env) içinde `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME`, `SSH_PASSWORD` değerlerini kontrol edin.
-- `SSH_PRIVATE_KEY` kullanıyorsanız:
-  - Inline key ise `\n` kaçışlarının doğru olduğundan emin olun.
-  - Dosya yolu veriyorsanız sunucuyu çalıştıran makinede dosya gerçekten mevcut olmalı.
-- Hedef sunucuda `PasswordAuthentication` kapalıysa parola ile bağlanamazsınız; private key kullanın.
-- SSH kullanıcı adının doğru kullanıcı olduğundan emin olun (eski örnekte `10.5.5.26` / yeni `.env` değerinde `10.5.5.25` farkı varsa düzeltin).
-
-### Upload başarısız
-
-- SSH bilgilerini kontrol edin (`SSH_HOST`, `SSH_USERNAME`, `SSH_PASSWORD`)
-- `TARGET_PATH` dizininde doğrudan yazma yoksa `SUDO_ENABLED=true` olmalı
-- `SUDO_PASSWORD` doğru olmalı (boşsa `SSH_PASSWORD` kullanılır)
-- `TEMP_UPLOAD_PATH` (ör. `/tmp`) SSH kullanıcısı tarafından yazılabilir olmalı
-- Hedef dizin yoksa uygulama önce normal `mkdir -p`, gerekirse sudo ile oluşturmayı dener
-
-## Proje Yapısı
-
-```text
-geoserver-file-uploader/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   ├── files/
-│   │   │   └── upload/
-│   │   └── page.tsx
-│   ├── components/
-│   └── lib/
-│       ├── session.ts
-│       └── ssh.ts
-├── .env.example
-├── .gitignore
-└── package.json
-```
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes.
+If you discover a vulnerability, see [SECURITY.md](SECURITY.md).

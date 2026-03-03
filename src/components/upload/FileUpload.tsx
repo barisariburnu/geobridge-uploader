@@ -71,7 +71,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
         setMessage({ 
           type: 'error', 
-          text: `${file.name}: Desteklenmeyen dosya türü` 
+          text: `${file.name}: Unsupported file type`
         });
         continue;
       }
@@ -79,7 +79,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
       if (file.size > MAX_FILE_SIZE) {
         setMessage({ 
           type: 'error', 
-          text: `${file.name}: Dosya boyutu çok büyük (maks. 500MB)` 
+          text: `${file.name}: File is too large (max 500MB)`
         });
         continue;
       }
@@ -131,7 +131,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         }
       } catch (err) {
         errorCount++;
-        lastError = err instanceof Error ? err.message : 'Bilinmeyen hata';
+        lastError = err instanceof Error ? err.message : 'Unknown error';
       }
 
       setProgress(((i + 1) / files.length) * 100);
@@ -140,18 +140,18 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
     setUploading(false);
 
     if (errorCount === 0) {
-      setMessage({ type: 'success', text: `${successCount} dosya başarıyla yüklendi` });
+      setMessage({ type: 'success', text: `${successCount} file(s) uploaded successfully` });
       setFiles([]);
       onUploadSuccess();
     } else if (successCount > 0) {
       setMessage({ 
         type: 'success', 
-        text: `${successCount} dosya yüklendi, ${errorCount} dosya başarısız: ${lastError}` 
+        text: `${successCount} file(s) uploaded, ${errorCount} failed: ${lastError}`
       });
       setFiles([]);
       onUploadSuccess();
     } else {
-      setMessage({ type: 'error', text: `Yükleme başarısız: ${lastError}` });
+      setMessage({ type: 'error', text: `Upload failed: ${lastError}` });
     }
   };
 
@@ -171,17 +171,17 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         <input {...getInputProps()} />
         <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragActive ? 'text-emerald-400' : 'text-slate-500'}`} />
         {isDragActive ? (
-          <p className="text-emerald-400 font-medium">Dosyaları buraya bırakın...</p>
+          <p className="text-emerald-400 font-medium">Drop files here...</p>
         ) : (
           <div>
             <p className="text-slate-300 font-medium mb-2">
-              Dosyaları sürükleyip bırakın veya seçmek için tıklayın
+              Drag and drop files here, or click to select
             </p>
             <p className="text-sm text-slate-500">
-              Desteklenen formatlar: GeoTIFF (.tif), Shapefile (.shp, .zip), ve diğer GeoServer uyumlu formatlar
+              Supported formats: GeoTIFF (.tif), Shapefile (.shp, .zip), and other GeoServer-compatible formats
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              Maksimum dosya boyutu: 500MB
+              Maximum file size: 500MB
             </p>
           </div>
         )}
@@ -239,7 +239,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         <div className="space-y-2">
           <Progress value={progress} className="h-2 bg-slate-700" />
           <p className="text-sm text-slate-400 text-center">
-            Yükleniyor... {Math.round(progress)}%
+            Uploading... {Math.round(progress)}%
           </p>
         </div>
       )}
@@ -251,7 +251,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
         >
           <Upload className="mr-2 h-4 w-4" />
-          {files.length} Dosyayı Yükle
+          Upload {files.length} File(s)
         </Button>
       )}
     </div>

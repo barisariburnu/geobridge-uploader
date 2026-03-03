@@ -38,7 +38,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         setError(data.message);
       }
     } catch {
-      setError('Bağlantı hatası. Lütfen tekrar deneyin.');
+      setError('Connection error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -53,9 +53,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               <Server className="h-8 w-8 text-emerald-400" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">GeoServer Dosya Yükleyici</CardTitle>
+          <CardTitle className="text-2xl font-bold text-white">GeoBridge Uploader</CardTitle>
           <CardDescription className="text-slate-400">
-            SSH ile uzak sunucuya dosya yüklemek için giriş yapın
+            Sign in to upload geospatial files to your remote server
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,25 +66,25 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-slate-300">Kullanıcı Adı</Label>
+              <Label htmlFor="username" className="text-slate-300">Username</Label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Kullanıcı adınızı girin"
+                placeholder="Enter your username"
                 required
                 className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">Şifre</Label>
+              <Label htmlFor="password" className="text-slate-300">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Şifrenizi girin"
+                placeholder="Enter your password"
                 required
                 className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500"
               />
@@ -97,12 +97,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Giriş yapılıyor...
+                  Signing in...
                 </>
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Giriş Yap
+                  Sign in
                 </>
               )}
             </Button>

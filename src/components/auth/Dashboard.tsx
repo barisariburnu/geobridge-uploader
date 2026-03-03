@@ -30,13 +30,13 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                 <Server className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-white">GeoServer Dosya Yükleyici</h1>
-                <p className="text-xs text-slate-400">SSH/SCP ile uzak sunucuya dosya yükleme</p>
+                <h1 className="text-lg font-semibold text-white">GeoBridge Uploader</h1>
+                <p className="text-xs text-slate-400">Secure GeoServer file delivery over SSH/SFTP</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-slate-400">
-                Hoş geldiniz, <span className="text-emerald-400 font-medium">{username}</span>
+                Welcome, <span className="text-emerald-400 font-medium">{username}</span>
               </span>
               <Button
                 variant="ghost"
@@ -45,7 +45,7 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                 className="bg-slate-700/50 text-slate-300 hover:bg-red-500/20 hover:text-red-400 border border-transparent hover:border-red-500/50"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Çıkış
+                Sign out
               </Button>
             </div>
           </div>
@@ -60,10 +60,10 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
                 <Upload className="h-5 w-5 text-emerald-400" />
-                Dosya Yükle
+                Upload Files
               </CardTitle>
               <CardDescription className="text-slate-400">
-                GeoTIFF, Shapefile ve diğer GeoServer uyumlu dosyaları yükleyin
+                Upload GeoTIFF, Shapefile, and other GeoServer-compatible formats
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -86,8 +86,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                   <Server className="h-5 w-5 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-300">Hedef Sunucu</p>
-                  <p className="text-xs text-slate-500">GeoServer Docker</p>
+                  <p className="text-sm font-medium text-slate-300">Target Server</p>
+                  <p className="text-xs text-slate-500">GeoServer Docker host</p>
                 </div>
               </div>
             </CardContent>
@@ -100,8 +100,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                   <Upload className="h-5 w-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-300">Aktarım Yöntemi</p>
-                  <p className="text-xs text-slate-500">SSH/SCP ile güvenli yükleme</p>
+                  <p className="text-sm font-medium text-slate-300">Transfer Method</p>
+                  <p className="text-xs text-slate-500">Secure upload via SSH/SFTP</p>
                 </div>
               </div>
             </CardContent>
@@ -114,8 +114,8 @@ export function Dashboard({ username, onLogout }: DashboardProps) {
                   <RefreshCw className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-300">Otomatik Güncelleme</p>
-                  <p className="text-xs text-slate-500">Dosya listesi otomatik yenilenir</p>
+                  <p className="text-sm font-medium text-slate-300">Auto Refresh</p>
+                  <p className="text-xs text-slate-500">File list refreshes after uploads</p>
                 </div>
               </div>
             </CardContent>

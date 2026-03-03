@@ -14,10 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GeoServer Dosya Yükleyici - SSH/SCP ile Dosya Yükleme",
-  description: "SSH/SCP kullanarak uzak sunucuya güvenli dosya yükleme. GeoServer Docker部署 için GeoTIFF ve Shapefile desteği.",
-  keywords: ["GeoServer", "SSH", "SCP", "Dosya Yükleme", "GeoTIFF", "Shapefile", "Docker"],
-  authors: [{ name: "GeoServer Admin" }],
+  title: "GeoBridge Uploader",
+  description:
+    "Open-source web uploader for securely transferring geospatial files to GeoServer data directories over SSH/SFTP.",
+  keywords: ["GeoServer", "SFTP", "SSH", "geospatial", "GeoTIFF", "Shapefile", "Next.js"],
+  authors: [{ name: "GeoBridge Contributors" }],
   icons: {
     icon: "/logo.svg",
   },
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
