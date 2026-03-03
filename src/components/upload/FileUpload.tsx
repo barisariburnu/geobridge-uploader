@@ -1,0 +1,259 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Upload, 
+  File, 
+  X, 
+  Loader2, 
+  CheckCircle2, 
+  AlertCircle,
+  FileImage,
+  FileArchive
+} from 'lucide-react';
+
+interface FileUploadProps {
+  onUploadSuccess: () => void;
+}
+
+const ALLOWED_EXTENSIONS = [
+  '.tif', '.tiff', '.geotiff',
+  '.shp', '.shx', '.dbf', '.prj', '.cpg', '.qix',
+  '.ecw', '.jp2', '.png', '.jpg', '.jpeg',
+  '.geojson', '.json', '.gml', '.kml', '.kmz',
+  '.zip'
+];
+
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
+function getFileExtension(fileName: string): string {
+  const lastDot = fileName.lastIndexOf('.');
+  return lastDot !== -1 ? fileName.substring(lastDot).toLowerCase() : '';
+}
+
+function getFileIcon(fileName: string) {
+  const ext = getFileExtension(fileName);
+  if (['.tif', '.tiff', '.geotiff', '.ecw', '.jp2', '.png', '.jpg', '.jpeg'].includes(ext)) {
+    return <FileImage className="h-5 w-5 text-emerald-400" />;
+  }
+  if (['.zip', '.gz', '.tar'].includes(ext)) {
+    return <FileArchive className="h-5 w-5 text-amber-400" />;
+  }
+  return <File className="h-5 w-5 text-slate-400" />;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+export function FileUpload({ onUploadSuccess }: FileUploadProps) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setMessage(null);
+    const validFiles: File[] = [];
+
+    for (const file of acceptedFiles) {
+      const ext = getFileExtension(file.name);
+      
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        setMessage({ 
+          type: 'error', 
+          text: `${file.name}: Desteklenmeyen dosya türü` 
+        });
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        setMessage({ 
+          type: 'error', 
+          text: `${file.name}: Dosya boyutu çok büyük (maks. 500MB)` 
+        });
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    setFiles(prev => [...prev, ...validFiles]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: true,
+  });
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async () => {
+    if (files.length === 0) return;
+
+    setUploading(true);
+    setProgress(0);
+    setMessage(null);
+
+    let successCount = 0;
+    let errorCount = 0;
+    let lastError = '';
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          successCount++;
+        } else {
+          errorCount++;
+          lastError = data.message;
+        }
+      } catch (err) {
+        errorCount++;
+        lastError = err instanceof Error ? err.message : 'Bilinmeyen hata';
+      }
+
+      setProgress(((i + 1) / files.length) * 100);
+    }
+
+    setUploading(false);
+
+    if (errorCount === 0) {
+      setMessage({ type: 'success', text: `${successCount} dosya başarıyla yüklendi` });
+      setFiles([]);
+      onUploadSuccess();
+    } else if (successCount > 0) {
+      setMessage({ 
+        type: 'success', 
+        text: `${successCount} dosya yüklendi, ${errorCount} dosya başarısız: ${lastError}` 
+      });
+      setFiles([]);
+      onUploadSuccess();
+    } else {
+      setMessage({ type: 'error', text: `Yükleme başarısız: ${lastError}` });
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Dropzone */}
+      <div
+        {...getRootProps()}
+        className={`
+          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+          ${isDragActive 
+            ? 'border-emerald-500 bg-emerald-500/10' 
+            : 'border-slate-600 hover:border-slate-500 bg-slate-800/30'
+          }
+        `}
+      >
+        <input {...getInputProps()} />
+        <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+        {isDragActive ? (
+          <p className="text-emerald-400 font-medium">Dosyaları buraya bırakın...</p>
+        ) : (
+          <div>
+            <p className="text-slate-300 font-medium mb-2">
+              Dosyaları sürükleyip bırakın veya seçmek için tıklayın
+            </p>
+            <p className="text-sm text-slate-500">
+              Desteklenen formatlar: GeoTIFF (.tif), Shapefile (.shp, .zip), ve diğer GeoServer uyumlu formatlar
+            </p>
+            <p className="text-xs text-slate-600 mt-1">
+              Maksimum dosya boyutu: 500MB
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Message */}
+      {message && (
+        <Alert className={message.type === 'success' 
+          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+          : 'bg-red-500/20 border-red-500/50 text-red-300'
+        }>
+          {message.type === 'success' 
+            ? <CheckCircle2 className="h-4 w-4" />
+            : <AlertCircle className="h-4 w-4" />
+          }
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* File List */}
+      {files.length > 0 && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-4">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {files.map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {getFileIcon(file.name)}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">{file.name}</p>
+                      <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(index)}
+                    disabled={uploading}
+                    className="text-slate-400 hover:text-red-400 hover:bg-red-500/20"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Progress */}
+      {uploading && (
+        <div className="space-y-2">
+          <Progress value={progress} className="h-2 bg-slate-700" />
+          <p className="text-sm text-slate-400 text-center">
+            Yükleniyor... {Math.round(progress)}%
+          </p>
+        </div>
+      )}
+
+      {/* Upload Button */}
+      {files.length > 0 && !uploading && (
+        <Button
+          onClick={uploadFiles}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {files.length} Dosyayı Yükle
+        </Button>
+      )}
+    </div>
+  );
+}
