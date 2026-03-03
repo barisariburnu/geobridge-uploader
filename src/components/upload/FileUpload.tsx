@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ interface FileUploadProps {
   onUploadSuccess: () => void;
 }
 
-const ALLOWED_EXTENSIONS = [
+const DEFAULT_ALLOWED_EXTENSIONS = [
   '.tif', '.tiff', '.geotiff',
   '.shp', '.shx', '.dbf', '.prj', '.cpg', '.qix',
   '.ecw', '.jp2', '.png', '.jpg', '.jpeg',
@@ -29,7 +29,7 @@ const ALLOWED_EXTENSIONS = [
   '.zip'
 ];
 
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const DEFAULT_MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024 * 1024; // 50GB
 
 function getFileExtension(fileName: string): string {
   const lastDot = fileName.lastIndexOf('.');
@@ -60,6 +60,31 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [allowedExtensions, setAllowedExtensions] = useState<string[]>(DEFAULT_ALLOWED_EXTENSIONS);
+  const [maxFileSizeBytes, setMaxFileSizeBytes] = useState<number>(DEFAULT_MAX_FILE_SIZE_BYTES);
+
+  useEffect(() => {
+    const loadUploadConfig = async () => {
+      try {
+        const response = await fetch('/api/upload');
+        const data = await response.json();
+
+        if (data?.success) {
+          if (Array.isArray(data.allowedExtensions) && data.allowedExtensions.length > 0) {
+            setAllowedExtensions(data.allowedExtensions);
+          }
+
+          if (typeof data.maxFileSizeBytes === 'number' && data.maxFileSizeBytes > 0) {
+            setMaxFileSizeBytes(data.maxFileSizeBytes);
+          }
+        }
+      } catch {
+        // keep defaults
+      }
+    };
+
+    void loadUploadConfig();
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setMessage(null);
@@ -68,7 +93,7 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
     for (const file of acceptedFiles) {
       const ext = getFileExtension(file.name);
       
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      if (!allowedExtensions.includes(ext)) {
         setMessage({ 
           type: 'error', 
           text: `${file.name}: Unsupported file type`
@@ -76,10 +101,10 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
         continue;
       }
 
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > maxFileSizeBytes) {
         setMessage({ 
           type: 'error', 
-          text: `${file.name}: File is too large (max 500MB)`
+          text: `${file.name}: File is too large (max ${(maxFileSizeBytes / 1024 / 1024 / 1024).toFixed(2)}GB)`
         });
         continue;
       }
@@ -88,11 +113,16 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
     }
 
     setFiles(prev => [...prev, ...validFiles]);
-  }, []);
+  }, [allowedExtensions, maxFileSizeBytes]);
+
+  const dropzoneAccept = {
+    'application/octet-stream': allowedExtensions,
+  } as const;
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: true,
+    accept: dropzoneAccept,
   });
 
   const removeFile = (index: number) => {
@@ -178,10 +208,10 @@ export function FileUpload({ onUploadSuccess }: FileUploadProps) {
               Drag and drop files here, or click to select
             </p>
             <p className="text-sm text-slate-500">
-              Supported formats: GeoTIFF (.tif), Shapefile (.shp, .zip), and other GeoServer-compatible formats
+              Supported formats: {allowedExtensions.join(', ')}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              Maximum file size: 500MB
+              Maximum file size: {(maxFileSizeBytes / 1024 / 1024 / 1024).toFixed(2)}GB
             </p>
           </div>
         )}

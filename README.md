@@ -8,7 +8,8 @@ GeoBridge Uploader is an open-source Next.js application for securely uploading 
 - Upload geospatial files directly from browser to remote Linux server
 - Optional sudo fallback for restricted target directories
 - File listing and file deletion from the web UI
-- Confirmation dialog before file deletion
+- Mandatory confirmation dialog before file deletion
+- Environment-based upload rules (`.env`) for max file size and allowed extensions
 - Environment-based configuration (`.env`)
 
 ## Tech Stack
@@ -28,6 +29,7 @@ GeoBridge Uploader is an open-source Next.js application for securely uploading 
    - First tries direct write into `TARGET_PATH`.
    - If permission fails and sudo is enabled, uploads to `TEMP_UPLOAD_PATH` then moves with sudo.
 5. File listing/deletion is handled via [`/api/files`](src/app/api/files/route.ts).
+6. Upload constraints are resolved from [`.env`](.env) through [`getUploadConfig()`](src/lib/upload-config.ts:53).
 
 ## Requirements
 
@@ -74,6 +76,10 @@ SESSION_SECRET=your-super-secret-key-for-session-encryption-min-32-chars
 SUDO_ENABLED=true
 SUDO_PASSWORD=
 TEMP_UPLOAD_PATH=/tmp
+
+# Upload constraints
+UPLOAD_MAX_FILE_SIZE_GB=50
+UPLOAD_ALLOWED_EXTENSIONS=.tif,.tiff,.geotiff,.shp,.shx,.dbf,.prj,.cpg,.qix,.ecw,.jp2,.png,.jpg,.jpeg,.geojson,.json,.gml,.kml,.kmz,.zip
 ```
 
 ## Scripts
@@ -101,7 +107,8 @@ npm run start
 - Login: [`POST /api/auth/login`](src/app/api/auth/login/route.ts)
 - Logout: [`POST /api/auth/logout`](src/app/api/auth/logout/route.ts)
 - Session: [`GET /api/auth/session`](src/app/api/auth/session/route.ts)
-- Upload: [`POST /api/upload`](src/app/api/upload/route.ts)
+- Upload config: [`GET /api/upload`](src/app/api/upload/route.ts)
+- Upload file: [`POST /api/upload`](src/app/api/upload/route.ts)
 - Files list: [`GET /api/files`](src/app/api/files/route.ts)
 - File delete: [`DELETE /api/files`](src/app/api/files/route.ts)
 

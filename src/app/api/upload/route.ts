@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { uploadFileViaSSH } from '@/lib/ssh';
-
-// Allowed file extensions for GeoServer
-const ALLOWED_EXTENSIONS = [
-  '.tif', '.tiff', '.geotiff',  // GeoTIFF
-  '.shp', '.shx', '.dbf', '.prj', '.cpg', '.qix',  // Shapefile
-  '.ecw', '.jp2', '.png', '.jpg', '.jpeg',  // Raster formats
-  '.geojson', '.json', '.gml', '.kml', '.kmz',  // Vector formats
-  '.zip',  // Archives (often used for shapefiles)
-];
-
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB max file size
+import { getUploadConfig } from '@/lib/upload-config';
 
 function getFileExtension(fileName: string): string {
   const lastDot = fileName.lastIndexOf('.');
@@ -24,6 +14,17 @@ function sanitizeFileName(fileName: string): string {
     .replace(/\.\./g, '')
     .replace(/[<>:"|?*\x00-\x1f]/g, '')
     .replace(/\s+/g, '_');
+}
+
+export async function GET() {
+  const config = getUploadConfig();
+
+  return NextResponse.json({
+    success: true,
+    allowedExtensions: config.allowedExtensions,
+    maxFileSizeBytes: config.maxFileSizeBytes,
+    maxFileSizeGb: config.maxFileSizeGb,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -48,19 +49,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const uploadConfig = getUploadConfig();
+
     // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > uploadConfig.maxFileSizeBytes) {
       return NextResponse.json(
-        { success: false, message: `Dosya boyutu çok büyük. Maksimum ${MAX_FILE_SIZE / 1024 / 1024}MB olmalı.` },
+        {
+          success: false,
+          message: `File is too large. Maximum allowed size is ${uploadConfig.maxFileSizeGb}GB.`,
+        },
         { status: 400 }
       );
     }
 
     // Validate file extension
     const extension = getFileExtension(file.name);
-    if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    if (!uploadConfig.allowedExtensions.includes(extension)) {
       return NextResponse.json(
-        { success: false, message: `Desteklenmeyen dosya türü. İzin verilen uzantılar: ${ALLOWED_EXTENSIONS.join(', ')}` },
+        {
+          success: false,
+          message: `Unsupported file type. Allowed extensions: ${uploadConfig.allowedExtensions.join(', ')}`,
+        },
         { status: 400 }
       );
     }
@@ -91,9 +100,9 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Upload error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { success: false, message: `Yükleme hatası: ${errorMessage}` },
+      { success: false, message: `Upload error: ${errorMessage}` },
       { status: 500 }
     );
   }
