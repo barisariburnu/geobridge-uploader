@@ -16,7 +16,7 @@ export const sessionOptions: SessionOptions = {
   cookieName: 'geoserver_upload_session',
   cookieOptions: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production' && process.env.SECURE_COOKIES !== 'false',
     sameSite: 'lax',
     maxAge: 60 * 60 * 8, // 8 hours
     path: '/',
