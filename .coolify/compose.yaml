@@ -1,0 +1,66 @@
+# Coolify: Base Directory /, Compose Location /.coolify/compose.yaml, RAW mode.
+services:
+  geobridge-uploader:
+    command: null
+    entrypoint: null
+    environment:
+      TARGET_PATH: ${CBS_GEOBRIDGE_UPLOADER_TARGET_PATH}
+      SECURE_COOKIES: ${CBS_GEOBRIDGE_UPLOADER_SECURE_COOKIES}
+      SUDO_ENABLED: ${CBS_GEOBRIDGE_UPLOADER_SUDO_ENABLED}
+      SSH_PRIVATE_KEY: ${CBS_GEOBRIDGE_UPLOADER_SSH_PRIVATE_KEY}
+      SESSION_SECRET: ${CBS_GEOBRIDGE_UPLOADER_SESSION_SECRET}
+      SSH_USERNAME: ${CBS_GEOBRIDGE_UPLOADER_SSH_USERNAME}
+      AUTH_USERNAME: ${CBS_GEOBRIDGE_UPLOADER_AUTH_USERNAME}
+      SSH_HOST: ${CBS_GEOBRIDGE_UPLOADER_SSH_HOST}
+      TEMP_UPLOAD_PATH: ${CBS_GEOBRIDGE_UPLOADER_TEMP_UPLOAD_PATH}
+      UPLOAD_MAX_FILE_SIZE_GB: ${CBS_GEOBRIDGE_UPLOADER_UPLOAD_MAX_FILE_SIZE_GB}
+      AUTH_PASSWORD: ${CBS_GEOBRIDGE_UPLOADER_AUTH_PASSWORD}
+      UPLOAD_ALLOWED_EXTENSIONS: ${CBS_GEOBRIDGE_UPLOADER_UPLOAD_ALLOWED_EXTENSIONS}
+      SUDO_PASSWORD: ${CBS_GEOBRIDGE_UPLOADER_SUDO_PASSWORD}
+      SSH_PASSWORD: ${CBS_GEOBRIDGE_UPLOADER_SSH_PASSWORD}
+      SSH_PORT: ${CBS_GEOBRIDGE_UPLOADER_SSH_PORT}
+      PATH: ${CBS_GEOBRIDGE_UPLOADER_PATH}
+      NODE_VERSION: ${CBS_GEOBRIDGE_UPLOADER_NODE_VERSION}
+      YARN_VERSION: ${CBS_GEOBRIDGE_UPLOADER_YARN_VERSION}
+      NODE_ENV: ${CBS_GEOBRIDGE_UPLOADER_NODE_ENV}
+      PORT: ${CBS_GEOBRIDGE_UPLOADER_PORT}
+      HOSTNAME: ${CBS_GEOBRIDGE_UPLOADER_HOSTNAME}
+    ports:
+    - 2326:3000
+    restart: unless-stopped
+    image: coolify-local/geobridge-uploader:${SOURCE_COMMIT:-latest}
+    pull_policy: never
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    container_name: geobridge-uploader-${COOLIFY_RESOURCE_UUID:?}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+    - traefik.docker.network=${COOLIFY_RESOURCE_UUID}
+    - traefik.enable=true
+    - traefik.http.middlewares.gzip-sse.compress.excludedcontenttypes=text/event-stream
+    - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+    - traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89.entryPoints=http
+    - traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89.middlewares=gzip-sse
+    - traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89.rule=Host(`${COOLIFY_PUBLIC_HOST:?}`) && PathPrefix(`/`)
+    - traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89.service=http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89
+    - traefik.http.services.http-0-${COOLIFY_RESOURCE_UUID}-geobridge-uploader-db89.loadbalancer.server.port=3000
+name: ${COOLIFY_RESOURCE_UUID:?}
+networks:
+  default:
+    external: true
+    name: ${COOLIFY_RESOURCE_UUID:?}
