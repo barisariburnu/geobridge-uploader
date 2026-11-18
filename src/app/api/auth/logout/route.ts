@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/monitoring.cjs'
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
@@ -11,7 +12,7 @@ export async function POST() {
       message: 'Çıkış başarılı',
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    reportError('OP_APP_API_AUTH_LOGOUT_ROUTE_TS_1', error);
     return NextResponse.json(
       { success: false, message: 'Çıkış sırasında bir hata oluştu' },
       { status: 500 }

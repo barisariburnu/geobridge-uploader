@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/monitoring.cjs'
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { listUploadedFiles, deleteFileFromServer } from '@/lib/ssh';
@@ -19,7 +20,7 @@ export async function GET() {
       files,
     });
   } catch (error) {
-    console.error('List files error:', error);
+    reportError('OP_APP_API_FILES_ROUTE_TS_1', error);
     const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu';
     return NextResponse.json(
       { success: false, message: errorMessage },
@@ -60,12 +61,13 @@ export async function DELETE(request: NextRequest) {
       });
     }
 
+    reportError('SSH_DELETE_FAILURE')
     return NextResponse.json(
       { success: false, message: result.message },
       { status: 500 }
     );
   } catch (error) {
-    console.error('Delete file error:', error);
+    reportError('OP_APP_API_FILES_ROUTE_TS_2', error);
     const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu';
     return NextResponse.json(
       { success: false, message: errorMessage },

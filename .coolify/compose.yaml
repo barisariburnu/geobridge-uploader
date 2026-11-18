@@ -4,6 +4,8 @@ services:
     command: null
     entrypoint: null
     environment:
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       TARGET_PATH: ${CBS_GEOBRIDGE_UPLOADER_TARGET_PATH}
       SECURE_COOKIES: ${CBS_GEOBRIDGE_UPLOADER_SECURE_COOKIES}
       SUDO_ENABLED: ${CBS_GEOBRIDGE_UPLOADER_SUDO_ENABLED}
@@ -28,7 +30,7 @@ services:
     ports:
     - 2326:3000
     restart: unless-stopped
-    image: coolify-local/geobridge-uploader:${SOURCE_COMMIT:-latest}
+    image: coolify-local/geobridge-uploader:latest
     pull_policy: never
     healthcheck:
       test:

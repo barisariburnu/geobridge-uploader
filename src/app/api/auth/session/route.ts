@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/monitoring.cjs'
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
@@ -17,7 +18,7 @@ export async function GET() {
       user: null,
     });
   } catch (error) {
-    console.error('Session check error:', error);
+    reportError('OP_APP_API_AUTH_SESSION_ROUTE_TS_1', error);
     return NextResponse.json(
       { authenticated: false, user: null },
       { status: 500 }

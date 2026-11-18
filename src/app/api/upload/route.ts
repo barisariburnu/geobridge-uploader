@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/monitoring.cjs'
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { uploadFileViaSSH } from '@/lib/ssh';
@@ -94,12 +95,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    reportError('SSH_UPLOAD_FAILURE')
     return NextResponse.json(
       { success: false, message: result.message },
       { status: 500 }
     );
   } catch (error) {
-    console.error('Upload error:', error);
+    reportError('OP_APP_API_UPLOAD_ROUTE_TS_1', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
       { success: false, message: `Upload error: ${errorMessage}` },

@@ -21,5 +21,14 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+COPY --from=builder /app/src/lib/monitoring.cjs ./src/lib/monitoring.cjs
+COPY --from=builder /app/scripts/monitoring-check.mjs ./scripts/monitoring-check.mjs
+COPY --from=builder /app/node_modules/@sentry ./node_modules/@sentry
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# Immutable runtime identity is added after expensive install/build layers.
+ARG MONITORING_SOURCE_REVISION
+RUN test "${#MONITORING_SOURCE_REVISION}" -eq 40 && case "$MONITORING_SOURCE_REVISION" in *[!0-9a-f]*) exit 35 ;; esac
+ENV SENTRY_RELEASE=geobridge-uploader@${MONITORING_SOURCE_REVISION}
+LABEL org.opencontainers.image.revision="${MONITORING_SOURCE_REVISION}"

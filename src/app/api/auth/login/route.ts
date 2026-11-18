@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/monitoring.cjs'
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
     const validPassword = process.env.AUTH_PASSWORD;
 
     if (!validUsername || !validPassword) {
+      reportError('AUTH_CONFIGURATION_FAILURE')
       return NextResponse.json(
         { success: false, message: 'Sunucu yapılandırma hatası' },
         { status: 500 }
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   } catch (error) {
-    console.error('Login error:', error);
+    reportError('OP_APP_API_AUTH_LOGIN_ROUTE_TS_1', error);
     return NextResponse.json(
       { success: false, message: 'Giriş sırasında bir hata oluştu' },
       { status: 500 }
