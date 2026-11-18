@@ -40,7 +40,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { fileName } = await request.json();
+    const body = await request.json();
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ success: false, message: 'Geçersiz istek' }, { status: 400 });
+    }
+    const { fileName } = body;
 
     if (!fileName) {
       return NextResponse.json(

@@ -55,3 +55,8 @@ assert edilir. Üretim servisleri veya persistent volume'lar kullanılmaz.
 Uygulama ve kontrol CLI'si aynı CommonJS SDK grafiğini yükler. Next standalone
 izlemesi CJS bağımlılıklarını taşıdığından bu seçim eksik ESM dependency riskini
 önler; Node20 ve gerçek Bun runner image'larında sentetik HTTP ile doğrulanmıştır.
+
+JSON nesnesi bekleyen 2 reported handler, null/dizi/skaler gövdeleri
+400 ile sessiz reddeder. Her handler gerçek route + SDK collector regresyonunda
+beş yanlış üst seviye şekille ölçülür; operasyonel TypeError yine tek güvenli
+olay üretir. Alan düzeyinde yeni kapsamlı doğrulama eklenmez.

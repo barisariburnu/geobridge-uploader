@@ -49,3 +49,28 @@ test('Next request hook ignores health checks and deduplicates the same escaped 
  assert.equal(envelopes.length, previous + 1);
  assert.equal(JSON.stringify(envelopes).includes('PRIVATE RENDER PASSWORD'), false);
 });
+
+test('JSON handlers reject null, arrays and scalar bodies before mutation without telemetry', async () => {
+ const previous = envelopes.length;
+ const dependencies = { '@/lib/session': { getSession: async () => ({ isLoggedIn: true }) }, '@/lib/ssh': {} };
+ const cases = [["auth/login", "POST"], ["files", "DELETE"]];
+ for (const [path, method] of cases) {
+  const route = loadRoute('src/app/api/' + path + '/route.ts', dependencies);
+  for (const body of [null, [], true, 42, 'invalid']) {
+   const response = await route[method]({ json: async () => body, headers: new Headers({ 'content-type': 'application/json' }) }, { params: Promise.resolve({ id: 'target' }) });
+   assert.equal(response.status, 400, path + ' rejects ' + JSON.stringify(body));
+  }
+ }
+ await monitor.flush();
+ assert.equal(envelopes.length, previous);
+});
+
+test('operational TypeError still produces one sanitized event', async () => {
+ const previous = envelopes.length;
+ const error = new TypeError('PRIVATE SSH TYPE FAILURE');
+ const route = loadRoute('src/app/api/files/route.ts', { '@/lib/session': { getSession: async () => ({ isLoggedIn: true }) }, '@/lib/ssh': { listUploadedFiles: async () => { throw error; } } });
+ assert.equal((await route.GET()).status, 500);
+ await monitor.flush();
+ assert.equal(envelopes.length, previous + 1);
+ assert.equal(JSON.stringify(envelopes).includes(error.message), false);
+});

@@ -4,7 +4,11 @@ import { getSession } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const body = await request.json();
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ success: false, message: 'Geçersiz istek' }, { status: 400 });
+    }
+    const { username, password } = body;
 
     const validUsername = process.env.AUTH_USERNAME;
     const validPassword = process.env.AUTH_PASSWORD;
